@@ -5,17 +5,13 @@ class GameController {
   }
 
   place(req, res){
-    const {body} = req
-    let board
-    if(!body.board){
-      res.status(400, {message: 'No board found'})
-    }
-    //const board = getBoard(body.board)
-    //save database (body.type, body.position)
+    const {board, ship, position, arrangement} = req.body
+    const placed = this.service.place(board, ship, position, arrangement)
+    res.json(placed)
   }
 
   attack(req, res){
-    this.service.newGame()
+    
   }
 
   newGame(req, res){

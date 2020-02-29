@@ -5,9 +5,13 @@ class GameRepository {
     this.gameState = []
   }
 
-  saveState(state) {
+  insertState(state) {
     this.gameState.push(state)
     return this.gameState.length
+  }
+
+  saveState(id, state) {
+    return id
   }
 
   getState(boardId){

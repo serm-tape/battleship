@@ -5,4 +5,4 @@ class Position {
   }
 }
 
-export Position
+export default Position

@@ -16,6 +16,8 @@ const SUBMARINE_COUNT = 4
 const VERTICAL = 'V'
 const HORIZONTAL = 'H'
 
+const BOARD_SIZE = 10
+
 export {
   BATTLE_SHIP,
   CRUISER,
@@ -33,5 +35,7 @@ export {
   SUBMARINE_COUNT,
 
   VERTICAL,
-  HORIZONTAL
+  HORIZONTAL,
+
+  BOARD_SIZE
 }
