@@ -1,3 +1,6 @@
+import AttackRequestSchema from '../schema/AttackRequestSchema'
+import PlaceShipRequestSchema from '../schema/PlaceShipRequestSchema'
+import RequestValidationError from '../error/RequestValidationError'
 
 class GameController {
   constructor(gameService) {
@@ -5,13 +8,21 @@ class GameController {
   }
 
   async place(req, res){
-    const {board, ship, position, arrangement} = req.body
+    const valid = PlaceShipRequestSchema.validate(req.body)
+    if (valid.error) {
+      throw new RequestValidationError(valid.error)
+    }
+    const {board, ship, position, arrangement} = valid.value
     const placed = await this.service.place(board, ship, position, arrangement)
     res.json(placed)
   }
 
   async attack(req, res){
-    const {board, position} = req.body
+    const valid = AttackRequestSchema.validate(req.body)
+    if (valid.error) {
+      throw new RequestValidationError(valid.error)
+    }
+    const {board, position} = valid.value
     const result = await this.service.attack(board, position)
     res.json(result)
   }

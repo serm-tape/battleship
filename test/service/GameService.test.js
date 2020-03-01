@@ -142,4 +142,23 @@ describe ('test GameService', () => {
       expect(repo.gameState[id-1].state).toBe(GameStateId.END)
     })
   })
+
+  describe ("All game", () => {
+    test ("Happy path", async () => {
+      const repo = new GameRepositoryMemory()
+      const service = new GameService(repo, rule)
+      const id = await service.newGame()
+      await service.place(id, constant.BATTLE_SHIP, {x:0,y:0}, constant.VERTICAL)
+      await service.place(id, constant.DESTROYER, {x:2,y:2}, constant.VERTICAL)
+      await service.attack(id, {x:0,y:0})
+      await service.attack(id, {x:0,y:1})
+      await service.attack(id, {x:1,y:1})
+      await service.attack(id, {x:2,y:1})
+      const result = await service.attack(id, {x:2,y:2})
+
+      expect(result.win).toBe(true)
+      expect(result.turn).toBe(5)
+      expect(repo.gameState[id-1].state).toBe(GameStateId.END)
+    })
+  })
 })
