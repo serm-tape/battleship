@@ -11,12 +11,19 @@ class GameController {
   }
 
   attack(req, res){
-    
+    const {board, position} = req.body
+    const result = this.service.attack(board, position)
+    res.json(result)
   }
 
   newGame(req, res){
     const id = this.service.newGame()
     res.json({id: id})
+  }
+
+  getState(req, res){
+    const state = this.service.getState(req.params.boardId)
+    res.json(state)
   }
 }
 

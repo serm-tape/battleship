@@ -4,10 +4,12 @@ import * as ERR from '../error/ErrorCode'
 import * as constant from '../model/constant'
 import * as CellState from '../model/CellState'
 import Position from '../model/Position'
+import * as GameStateId from '../model/GameStateId'
 
 class GameService {
-  constructor(repo) {
+  constructor(repo, rule) {
     this.repo = repo
+    this.rule = rule
   }
 
   place(board, ship, position, arrangement) {
@@ -16,7 +18,7 @@ class GameService {
       throw new ApiError(ERR.NO_BOARD, 400, 'invalid board')
     }
     //check if placable
-    if(state.state !== 100){
+    if(state.state !== GameStateId.PLACING){
       throw new ApiError(ERR.ACTION_NOT_ALLOWED, 400, 'Couldn\'t place ship in this state')
     }
     //check if ship available
@@ -81,19 +83,82 @@ class GameService {
         if(i===state.shipSize[ship-1] - 1 && fpos.y < state.board[fpos.x].length - 1)
           state.board[fpos.x][fpos.y + 1] = CellState.BARRIER
       }
-
-      //Check all placed
-      const ready = state.shipPlaced.reduce( (p,c) => p || c[0] === c[1], false)
     }
     state.shipPlaced[ship-1][0]++
+    //Check all placed
+    const ready = state.shipPlaced.reduce( (p,c) => p || c[0] === c[1], false)
+    if (ready) {
+      state.state = GameStateId.PLAYING
+    }
     this.repo.saveState(board, state)
     return {ship_placed: state.shipPlaced, ready: ready}
   }
 
   newGame() {
-    const state = new GameState()
+    const state = new GameState(this.rule)
     const id = this.repo.insertState(state)
     return id
+  }
+
+  attack(board, position){
+    const state = this.repo.getState(board)
+
+    //state found
+    if(!state) {
+      throw new ApiError(ERR.NO_BOARD, 400, 'invalid board')
+    }
+    //check state
+    if (state.state !== GameStateId.PLAYING) {
+      throw new ApiError(ERR.ACTION_NOT_ALLOWED, 400, 'Couldn\'t attack in this state')
+    }
+
+    //check fired
+    const cell = state.board[position.x][position.y]
+    if (cell === CellState.FIRED_HIT || cell === CellState.FIRED_MISS) {
+      throw new ApiError(
+        ERR.ALREDY_ATTACKED,
+        400,
+        `This cell already attacked (${position.x}, ${position.y}) and ${cell === CellState.FIRED_HIT?'HIT':'MISS'}`
+      )
+    }
+
+    let isHit = false
+    if (cell === CellState.OCCUPIED) {
+      isHit = true
+      state.hp -= 1
+      state.board[position.x][position.y] = CellState.FIRED_HIT
+    } else {
+      state.board[position.x][position.y] = CellState.FIRED_MISS
+    }
+    state.turn += 1
+
+    if (state.hp === 0){
+      state.state = GameStateId.END
+    }
+
+    this.repo.saveState(board, state)
+    console.log(state.board)
+
+
+    return {hit: isHit, cell_left: state.hp, turn: state.turn, win: state.state === GameStateId.END}
+  }
+
+  getState(board){
+    const state = this.repo.getState(board)
+
+    //state found
+    if(!state) {
+      throw new ApiError(ERR.NO_BOARD, 400, 'invalid board')
+    }
+    const attackerView = state.board.map( col => 
+      col.map( cell => {
+        if(cell === null) return null
+        else if(cell === CellState.FIRED_HIT) return true
+        else if(cell === CellState.FIRED_MISS) return false
+      })
+    )
+
+    return {turn: state.turn, cell_left: state.hp, board: attackerView, state: state.state}
   }
 }
 
