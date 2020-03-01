@@ -5,17 +5,24 @@ import ApiError from './error/ApiError'
 import BattleShipApi from './route/BattleShipApi'
 import GameController from './controller/GameController'
 import GameService from './service/GameService'
-import GameRepository from './repository/GameRepository'
+import GameRepository, {GameRepositoryMemory} from './repository/GameRepository'
 import * as CLASSIC_RULE from './rule/ClassicRule'
+import * as RUSH_RULE from './rule/RushRule'
+
+import mongoose from 'mongoose'
+
+mongoose.connect('mongodb://localhost/battleship', {useNewUrlParser: true, useUnifiedTopology: true })
+const db = mongoose.connection
+db.on('error', console.error.bind(console, 'connection error:'))
+db.once('open', () => console.log('mongo connected'))
 
 const app = new express()
 
 //routes
 app.get('/', (req, res) => res.json({alive: true}))
-
 //di
-const gameRepo = new GameRepository()
-const gameService = new GameService(gameRepo, CLASSIC_RULE)
+const gameRepo = new GameRepository(db)
+const gameService = new GameService(gameRepo, RUSH_RULE)
 const gameController = new GameController(gameService)
 const battleShipApi = new BattleShipApi(gameController)
 

@@ -8,10 +8,14 @@ class BattleShipApi{
     this.api = new express.Router()
     this.api.use(bodyParser.json())
 
-    this.api.post('/newgame', (req, res) => this.controller.newGame(req, res))
-    this.api.post('/place', (req, res) => this.controller.place(req, res))
-    this.api.post('/attack', (req, res) => this.controller.attack(req, res))
-    this.api.get('/state/:boardId', (req, res) => this.controller.getState(req, res))
+    this.api.post('/newgame', (req, res, next) => this.asyncWrapper(this.controller.newGame(req, res), next))
+    this.api.post('/place', (req, res, next) => this.asyncWrapper(this.controller.place(req, res), next))
+    this.api.post('/attack', (req, res, next) => this.asyncWrapper(this.controller.attack(req, res), next))
+    this.api.get('/state/:boardId', (req, res, next) => this.asyncWrapper(this.controller.getState(req, res), next))
+  }
+
+  asyncWrapper(promiseController, next) {
+    promiseController.catch(next)
   }
 }
 

@@ -12,8 +12,8 @@ class GameService {
     this.rule = rule
   }
 
-  place(board, ship, position, arrangement) {
-    const state = this.repo.getState(board)
+  async place(board, ship, position, arrangement) {
+    const state = await this.repo.getState(board)
     if(!state) {
       throw new ApiError(ERR.NO_BOARD, 400, 'invalid board')
     }
@@ -22,7 +22,7 @@ class GameService {
       throw new ApiError(ERR.ACTION_NOT_ALLOWED, 400, 'Couldn\'t place ship in this state')
     }
     //check if ship available
-    if(state.shipPlaced[ship-1][0] >= state.shipPlaced[ship-1][1]){
+    if(state.shipPlaced[ship-1].count >= state.shipPlaced[ship-1].limit){
       throw new ApiError(ERR.NO_SHIP, 400, `Couldn't place more ship type of ${ship}`)
     }
 
@@ -84,24 +84,24 @@ class GameService {
           state.board[fpos.x][fpos.y + 1] = CellState.BARRIER
       }
     }
-    state.shipPlaced[ship-1][0]++
+    state.shipPlaced[ship-1].count++
     //Check all placed
-    const ready = state.shipPlaced.reduce( (p,c) => p || c[0] === c[1], false)
+    const ready = state.shipPlaced.reduce( (p,c) => p && c.count === c.limit, true)
     if (ready) {
       state.state = GameStateId.PLAYING
     }
-    this.repo.saveState(board, state)
+    await this.repo.saveState(board, state)
     return {ship_placed: state.shipPlaced, ready: ready}
   }
 
-  newGame() {
+  async newGame() {
     const state = new GameState(this.rule)
-    const id = this.repo.insertState(state)
+    const id = await this.repo.insertState(state)
     return id
   }
 
-  attack(board, position){
-    const state = this.repo.getState(board)
+  async attack(board, position){
+    const state = await this.repo.getState(board)
 
     //state found
     if(!state) {
@@ -110,6 +110,13 @@ class GameService {
     //check state
     if (state.state !== GameStateId.PLAYING) {
       throw new ApiError(ERR.ACTION_NOT_ALLOWED, 400, 'Couldn\'t attack in this state')
+    }
+
+    //fired in board
+    if (position.x >= state.board.length || position.x < 0 ||
+      position.y >= state.board[position.x].length || position.y < 0 
+    ) {
+      throw new ApiError(ERR.ATTACK_POSITION_EXCEED_BOARD_SIZE, 400, 'Attack position not in board')
     }
 
     //check fired
@@ -136,15 +143,13 @@ class GameService {
       state.state = GameStateId.END
     }
 
-    this.repo.saveState(board, state)
-    console.log(state.board)
-
+    await this.repo.saveState(board, state)
 
     return {hit: isHit, cell_left: state.hp, turn: state.turn, win: state.state === GameStateId.END}
   }
 
-  getState(board){
-    const state = this.repo.getState(board)
+  async getState(board){
+    const state = await this.repo.getState(board)
 
     //state found
     if(!state) {
