@@ -11,13 +11,21 @@
     "mongoose": "^5.9.2"
   },
   "scripts": {
-    "start": "nodemon index.js --exec babel-node"
+    "start": "nodemon index.js --exec babel-node",
+    "test": "jest"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.js?$": "babel-jest"
+    }
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.6",
     "@babel/node": "^7.8.4",
     "@babel/preset-env": "^7.8.6",
+    "babel-jest": "^25.1.0",
+    "jest": "^25.1.0",
     "nodemon": "^2.0.2"
   }
 }

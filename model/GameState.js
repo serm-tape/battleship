@@ -11,8 +11,8 @@ class GameState {
     this.board = new Array(rule.BOARD_SIZE)
     this.shipPlaced = [
       new LimitCount(rule.BATTLE_SHIP_COUNT, 0),
-      new LimitCount(rule.DESTROYER_COUNT, 0),
       new LimitCount(rule.CRUISER_COUNT, 0),
+      new LimitCount(rule.DESTROYER_COUNT, 0),
       new LimitCount(rule.SUBMARINE_COUNT, 0)
     ]
     this.shipSize = [
